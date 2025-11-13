@@ -2,17 +2,16 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
+from vllm import LLM, SamplingParams
 
-app = FastAPI(title="AI Literature Server")
+app = FastAPI(title="AI Literature Server (vLLM)")
 
 # ===== 데이터 모델 =====
 class PoemRequest(BaseModel):
     poem: str
 
 class ElaborationRequest(BaseModel):
-    text: str  # 선택 구절 + 사용자 감정을 합친 하나의 문자열
+    text: str  # 시 전체 + 선택 구절 + 느낀점 등을 한 문자열로 받음
 
 class ConversationTurn(BaseModel):
     role: str   # "user" or "assistant"
@@ -23,42 +22,37 @@ class ConversationSummaryRequest(BaseModel):
 
 class ConversationSummaryResponse(BaseModel):
     summary: str
-    emotional_flow: str
-    insight: str
 
 # ===== 모델 로드 =====
 MODEL_NAME = "Qwen/Qwen3-0.6B"
-tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
-model = AutoModelForCausalLM.from_pretrained(
-    MODEL_NAME,
-    torch_dtype=torch.float16,
-    device_map="auto"
+llm = LLM(
+    model=MODEL_NAME,
+    tensor_parallel_size=1,
+    gpu_memory_utilization=0.7,
+    max_model_len=2048  # 기존 40960 → 2048로 축소
 )
 
+
 # ===== Helper 함수 =====
-def generate_text(messages: List[dict], max_new_tokens=256) -> str:
-    text = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True,
-        enable_thinking=True
-    )
-    inputs = tokenizer([text], return_tensors="pt").to(model.device)
-    generated_ids = model.generate(
-        **inputs,
-        max_new_tokens=max_new_tokens,
+def generate_text(messages: List[dict], max_new_tokens: int = 256) -> str:
+    """
+    vLLM 기반 추론 함수
+    """
+    # messages를 단일 문자열로 합치기
+    prompt = "\n".join([f"{m['role'].upper()}: {m['content']}" for m in messages])
+
+    # 샘플링 설정
+    sampling_params = SamplingParams(
         temperature=0.7,
         top_p=0.9,
-        do_sample=True
+        max_output_tokens=max_new_tokens
     )
-    output_ids = generated_ids[0][len(inputs.input_ids[0]):].tolist()
-    try:
-        index = len(output_ids) - output_ids[::-1].index(151668)  # </think> 토큰
-    except ValueError:
-        index = 0
-    thinking_content = tokenizer.decode(output_ids[:index], skip_special_tokens=True).strip()
-    content = tokenizer.decode(output_ids[index:], skip_special_tokens=True).strip()
-    return content, thinking_content
+
+    # 추론
+    response = llm.generate(prompt, sampling_params=sampling_params)
+
+    # 첫 번째 응답 텍스트 반환
+    return response[0].outputs[0].text.strip()
 
 # ===== 2. 구절/감정 구체화 API =====
 @app.post("/api/elaborate")
@@ -72,15 +66,19 @@ def elaborate(request: ElaborationRequest):
 단, 해석을 길게 늘어놓지 말고 감정의 결을 ‘짙게’ 느끼는 듯한 표현으로 써라.
 사용자에게 ‘위로받는 느낌’을 줄 수 있도록 따뜻하게 공감하며 말해줘.
 
+그리고 무조건 한국어로 말해줘
+
 [예시1]
 입력:
----
 시:
 바람은 말없이 창가를 스친다  
 그대 이름을 부르지 못한 채  
 밤하늘만 바라본다
+
+선택 구절: "그대 이름을 부르지 못한 채" 
+느낀점: 슬프다
+
 ---
-선택 구절: "그대 이름을 부르지 못한 채"
 
 출력:
 그 이름을 삼킨 마음 속엔 수많은 말들이 갇혀 있죠.  
@@ -94,25 +92,22 @@ def elaborate(request: ElaborationRequest):
 낡은 신발 끈을 고쳐 묶으며  
 내일의 길을 떠올린다  
 조금은 두렵지만, 걸어야 한다
----
-선택 구절: "조금은 두렵지만, 걸어야 한다"
+
+선택 구절: "조금은 두렵지만, 걸어야 한다" 
+느낀점: 공감된다
 
 출력:
 그 두려움 속에서도 당신은 멈추지 않네요.  
 낡은 끈을 다시 묶는 그 손끝엔 포기하지 않으려는 용기가 숨어 있어요.  
 그 한 걸음이 이미 내일을 향한 첫 희망이에요.
-
-이제 아래 시와 선택 구절을 읽고, 그 감정을 공감하며 문학적으로 구체화해줘.
     """.strip()
 
-    # request.text는 "시 원문 + 선택 구절"을 함께 담은 문자열로 들어옴
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"{request.text}"}
+        {"role": "user", "content": request.text}
     ]
-    content, thinking = generate_text(messages)
-    return {"elaboration": content, "thinking": thinking}
-
+    content = generate_text(messages)
+    return {"elaboration": content}
 
 # ===== 3. 대화 요약 API =====
 @app.post("/api/summarize", response_model=ConversationSummaryResponse)
@@ -129,6 +124,7 @@ def summarize_conversation(request: ConversationSummaryRequest):
 - 느낀 점 또는 통찰 (마지막에 남은 울림이나 여운)
 
 언어는 부드럽고 시적인 톤을 유지하되, 너무 꾸미지 말고 진솔하게 표현해.
+그리고 무조건 한국어로 말해줘
 아래는 참고 예시야.
 
 [예시1]
@@ -144,17 +140,10 @@ def summarize_conversation(request: ConversationSummaryRequest):
 이제 아래 대화를 읽고, 같은 방식으로 정리해줘.
     """.strip()
 
-    prompt = f"--- 대화 로그 ---\n{dialogue_text}"
-
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": prompt}
+        {"role": "user", "content": f"--- 대화 로그 ---\n{dialogue_text}"}
     ]
 
-    output_text, _ = generate_text(messages, max_new_tokens=512)
-
-    return ConversationSummaryResponse(
-        summary=output_text.strip(),
-        emotional_flow="",
-        insight=""
-    )
+    output_text = generate_text(messages, max_new_tokens=512)
+    return ConversationSummaryResponse(summary=output_text.strip())
