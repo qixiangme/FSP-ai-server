@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+
+# ---- llama.cpp python wrapper ----
+llama-cpp-python>=0.2.70
+
+# ---- Transformers 생태계 사용 가능 ----
+transformers>=4.45.0
+accelerate>=0.33.0
+einops
+safetensors
+sentencepiece
