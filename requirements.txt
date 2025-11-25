@@ -10,3 +10,4 @@ accelerate>=0.33.0
 einops
 safetensors
 sentencepiece
+PyYAML

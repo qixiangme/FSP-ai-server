@@ -11,7 +11,8 @@ class GGUFModel:
             
             # --- Continuous Batching 튜닝 파라미터 (4GB 최적화) ---
             n_parallel=1,          # (핵심 튜닝) GPU가 동시에 유지할 Context Slot 개수
-            n_batch=512,           # Input Token 처리 배치 사이즈
+            n_batch=512,         
+                # Input Token 처리 배치 사이즈
             # --------------------------------------------------------
         )
 
