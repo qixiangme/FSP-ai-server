@@ -7,19 +7,21 @@ from core.model_loader import GGUFModel # runner는 프로젝트 루트에 있�
 # 주의: model path가 실제 파일 경로와 일치하는지 꼭 확인하세요.
 # n_parallel=1, n_batch=512 (max length 기준) 설정은 유지
 model = GGUFModel(
-    model_path="model/gemma-3-1b-it-q4_0.gguf", 
-    max_ctx=2048,
-    gpu_layers=20
+    model_path="model/gemma-3-4b-it-q4_0.gguf", 
+    max_ctx=4096, #모델이 한번에 처리할수있는 최대 컨텍스트
+    gpu_layers=999, #가능한 한 모두 GPU에 올림,
 )
 
 
 def run_inference(system_prompt: str, user_input: str, max_tokens: int, stop_tokens: Optional[List[str]] = None) -> str:
     """단발성 질문/요청 처리를 위한 공통 LLM 호출 헬퍼"""
+    
+
     messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_input}
+       {"role": "system", "content": system_prompt},
+         {"role": "user", "content": user_input}
     ]
-    # n_parallel=1이므로 max_tokens=256과 n_batch=512로 설정된 model.chat을 사용
+   
     return model.chat(messages, max_tokens=max_tokens )
 
 
@@ -28,12 +30,14 @@ def run_inference(system_prompt: str, user_input: str, max_tokens: int, stop_tok
 def elaborate_service(text: str) -> str:
     """문장 구체화 로직"""
     system_prompt = (
-        "너는 문학적 표현을 풍부하게 만드는 작가야. "
-        "사용자가 입력한 문장의 의미를 유지하되, "
-        "더 감성적이고 시적인 문체로 다듬고 확장해서 작성해줘."
+
+        "사용자가 입력한 문장의 의미를 유지하고 공감해줘서 "
+        "더 해석을 확장가능하게 해줘 "
+        "3~4문장 정도"
+    
     )
     # 짧은 응답(Elaborate)을 위해 max_tokens=128로 설정 (최적화)
-    return run_inference(system_prompt, text, max_tokens=256)
+    return run_inference(system_prompt, text, max_tokens=128)
 
 def summarize_service(conversation: List[Dict]) -> str:
     """대화 요약 로직"""

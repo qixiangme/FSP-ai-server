@@ -2,7 +2,7 @@ from llama_cpp import Llama
 from typing import List, Dict
 
 class GGUFModel:
-    def __init__(self, model_path, max_ctx=2048, gpu_layers=20):
+    def __init__(self, model_path, max_ctx=2048, gpu_layers=28,n_batch = 1024):
        self.model = Llama(
             model_path=model_path,
             n_ctx=max_ctx,
@@ -11,7 +11,7 @@ class GGUFModel:
             
             # --- Continuous Batching 튜닝 파라미터 (4GB 최적화) ---
             n_parallel=1,          # (핵심 튜닝) GPU가 동시에 유지할 Context Slot 개수
-            n_batch=512,           # Input Token 처리 배치 사이즈
+            n_batch= n_batch,           # Input Token 처리 배치 사이즈
             # --------------------------------------------------------
         )
 

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 from schemas.conversation import ConversationSummaryRequest, ConversationSummaryResponse
 from services.llm_inference import summarize_service # 서비스 로직 import
+import time
 
 router = APIRouter()
 
@@ -13,10 +14,12 @@ def summarize_conversation_api(request: ConversationSummaryRequest):
         if role not in ["user", "assistant"]:
             role = "user"
         conversation_dicts.append({"role": role, "content": t.content})
-        
+    
+    start = time.time()
     # 서비스 로직 호출
     summary_text = summarize_service(conversation_dicts)
-
+    duration = time.time()-start
+    print(f"LATENCY : {duration}")
     return ConversationSummaryResponse(
         summary=summary_text.strip(),
         emotional_flow="감정 흐름 분석 데이터 (예시)",
