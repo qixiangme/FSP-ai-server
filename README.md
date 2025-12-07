@@ -23,7 +23,7 @@
 * gemma-3-1b-it-qat-q4_0-gguf 모델 로딩
 * Q4_0 양자화 모델로 메모리 사용량 최소화
 * gpu_layers=999 설정으로 GPU 가속 최대 적용
-* n_batch, n_threads 등 llama.cpp 파라미터 조정 가능
+* n_batch, n_threads 등 llama.cpp 파라미터 조정 가능(512,12 추천)
 * model_loader 모듈만 수정하면 모델 교체 가능
 
 ### 아키텍처 구성
@@ -105,3 +105,4 @@ python app.py
 ---
 
 필요하면 **문서화 정량·정성 평가 항목(3~9번)**에 맞춰 채점형 버전으로도 재구성해줄까?
+
