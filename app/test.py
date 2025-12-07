@@ -6,9 +6,6 @@ from typing import Any, Dict, Optional
 BASE_URL = "http://127.0.0.1:8000"
 
 
-# -----------------------------
-# 공통 요청 함수
-# -----------------------------
 def send_post(endpoint: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     url = f"{BASE_URL}{endpoint}"
     try:
@@ -32,7 +29,7 @@ def send_post(endpoint: str, payload: Dict[str, Any]) -> Optional[Dict[str, Any]
 
 def test_elaborate():
     payload = {
-        "text": "분명히 알고 가는 이의 뒷모습은 아름답다. 이 구절에서 느낀 슬픔과 애틋함이 느껴져."
+        "text": "오래 보아야 사랑스러운 존재에 대해 생각이 나요"
     }
     return send_post("/api/elaborate", payload)
 
@@ -48,15 +45,12 @@ def test_summarize():
     return send_post("/api/summarize", payload)
 
 
-# -----------------------------
-# 실행 메인
-# -----------------------------
+
 if __name__ == "__main__":
     print("=== AI 서버 테스트 시작 ===")
 
-    # 필요한 것만 골라 테스트 가능
     test_elaborate()
     test_summarize()
-    # test_interpret()  # 필요하면 주석 해제
+    # test_interpret()  
 
     print("\n=== 테스트 종료 ===")

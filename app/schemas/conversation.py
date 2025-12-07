@@ -1,13 +1,22 @@
-from pydantic import BaseModel
-from typing import List
+# schemas/conversation.py
+from pydantic import BaseModel, Field
+from typing import List, Optional
+
 class ConversationTurn(BaseModel):
-    role: str   # "user" or "assistant"
+    role: str   
     content: str
+    sessionId: Optional[str] = None  
+    
+    class Config:
+        extra = "ignore"  
 
 class ConversationSummaryRequest(BaseModel):
     conversation: List[ConversationTurn]
+    userId: Optional[int] = None  
+    
+    class Config:
+        extra = "ignore"  
 
 class ConversationSummaryResponse(BaseModel):
     summary: str
-    emotional_flow: str = "" # 기본값 처리
-    insight: str = ""
+

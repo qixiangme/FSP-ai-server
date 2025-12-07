@@ -9,10 +9,8 @@ class GGUFModel:
             n_gpu_layers=gpu_layers,
             verbose=False,
             
-            # --- Continuous Batching 튜닝 파라미터 (4GB 최적화) ---
-            n_parallel=1,          # (핵심 튜닝) GPU가 동시에 유지할 Context Slot 개수
-            n_batch= n_batch,           # Input Token 처리 배치 사이즈
-            # --------------------------------------------------------
+            n_parallel=1,          # (GPU가 동시에 유지할 Slot 개수
+            n_batch= n_batch,           # Input Token 처리 사이즈
         )
 
     def chat(self, messages: List[Dict], max_tokens=256):
