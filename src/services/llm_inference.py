@@ -4,7 +4,7 @@ from src.core.model_loader import GGUFModel
 
 # 모델 로드 (기존 그대로)
 model = GGUFModel(
-    model_path="/model/Qwen3-4B-Q4_K_M.gguf",
+    model_path="/model/Qwen3-0.6B-Q8_0.gguf",
     max_ctx=4096,
     gpu_layers=999,
 )
@@ -47,11 +47,11 @@ def summarize_service(conversation: List[Dict]) -> str:
 # --------------------
 # 비동기 wrapper (FastAPI에서 쓰레드로 안전하게 호출)
 # --------------------
-async def elaborate_service_async(text: str) -> str:
+async def elaborate_service_async(text: str) -> dict:
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, elaborate_service, text)
 
 
-async def summarize_service_async(conversation: List[Dict]) -> str:
+async def summarize_service_async(conversation: List[Dict]) -> dict:
     loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, summarize_service, conversation)

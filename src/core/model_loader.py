@@ -13,22 +13,15 @@ class GGUFModel:
             n_batch= n_batch,           # Input Token 처리 사이즈
         )
 
-    def chat(self, messages: List[Dict], max_tokens=256):
-        """
-        messages 형태:
-        [
-            {"role": "system", "content": "..."},
-            {"role": "user", "content": "..."}
-        ]
-        """
-        try:
-            result = self.model.create_chat_completion(
-                messages=messages,
-                temperature=0.7,
-                top_p=0.9,
-                max_tokens=max_tokens,
-            )
-            return result["choices"][0]["message"]["content"]
-        except Exception as e:
-            print(f"Generation Error: {e}")
-            return "오류가 발생하여 응답을 생성할 수 없습니다."
+    def chat(self, messages, max_tokens):
+        output = self.model.create_chat_completion(
+            messages=messages,
+            max_tokens=max_tokens,
+        )
+
+        return {
+            "text": output["choices"][0]["message"]["content"],
+            "prompt_tokens": output["usage"]["prompt_tokens"],
+            "generated_tokens": output["usage"]["completion_tokens"],
+            "total_tokens": output["usage"]["total_tokens"],
+        }
