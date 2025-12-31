@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Request
 from src.schemas.conversation import ConversationSummaryRequest, ConversationSummaryResponse
 from src.services.llm_inference import summarize_service,summarize_service_async
 import time
+import psutil
 import json
 import re
 import asyncio
@@ -78,8 +79,11 @@ async def summarize_conversation_api(raw_request: Request):
         start = time.time()
         summary_text = await summarize_service_async(conversation_dicts)
         duration = time.time() - start
-        
-        print(f"LATENCY: {duration:.2f}s")
+        vm = psutil.virtual_memory()
+        print(f"LATENCY : {duration}")
+        print(f"CPU_percent : {psutil.cpu_percent(interval=0.1)}")
+        print(f"memory_used_mb : {vm.used // 1024 // 1024}")
+        print(f"memory_total_mb : {vm.total // 1024 // 1024}")
         print(f"SUMMARY: {summary_text[:100]}...")
         
         return ConversationSummaryResponse(
