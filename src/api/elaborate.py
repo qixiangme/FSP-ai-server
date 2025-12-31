@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from schemas.elaborate import ElaborateRequest, ElaborateResponse
-from services.llm_inference import elaborate_service ,elaborate_service_async# 서비스 로직 import
+from src.schemas.elaborate import ElaborateRequest, ElaborateResponse
+from src.services.llm_inference import elaborate_service ,elaborate_service_async# 서비스 로직 import
 import time
 router = APIRouter()
 

@@ -1,10 +1,10 @@
 import asyncio
 from typing import List, Dict
-from core.model_loader import GGUFModel
+from src.core.model_loader import GGUFModel
 
 # 모델 로드 (기존 그대로)
 model = GGUFModel(
-    model_path="model/gemma-3-4b-it-q4_0.gguf",
+    model_path="/model/Qwen3-4B-Q4_K_M.gguf",
     max_ctx=4096,
     gpu_layers=999,
 )

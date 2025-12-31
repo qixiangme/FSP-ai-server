@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Request
-from schemas.conversation import ConversationSummaryRequest, ConversationSummaryResponse
-from services.llm_inference import summarize_service,summarize_service_async
+from src.schemas.conversation import ConversationSummaryRequest, ConversationSummaryResponse
+from src.services.llm_inference import summarize_service,summarize_service_async
 import time
 import json
 import re
